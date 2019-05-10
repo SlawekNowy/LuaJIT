@@ -206,6 +206,7 @@ LUA_API int   (lua_load) (lua_State *L, lua_Reader reader, void *dt,
                                         const char *chunkname);
 
 LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data);
+LUA_API int (lua_dump_strip) (lua_State *L, lua_Writer writer, void *data, int strip);
 
 
 /*
