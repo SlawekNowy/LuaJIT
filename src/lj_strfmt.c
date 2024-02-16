@@ -1,6 +1,6 @@
 /*
 ** String formatting.
-** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2023 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include <stdio.h>
@@ -102,7 +102,7 @@ retlit:
 char * LJ_FASTCALL lj_strfmt_wint(char *p, int32_t k)
 {
   uint32_t u = (uint32_t)k;
-  if (k < 0) { u = (uint32_t)-k; *p++ = '-'; }
+  if (k < 0) { u = ~u+1u; *p++ = '-'; }
   if (u < 10000) {
     if (u < 10) goto dig1;
     if (u < 100) goto dig2;
@@ -287,7 +287,7 @@ SBuf *lj_strfmt_putfxint(SBuf *sb, SFormat sf, uint64_t k)
   /* Figure out signed prefixes. */
   if (STRFMT_TYPE(sf) == STRFMT_INT) {
     if ((int64_t)k < 0) {
-      k = (uint64_t)-(int64_t)k;
+      k = ~k+1u;
       prefix = 256 + '-';
     } else if ((sf & STRFMT_F_PLUS)) {
       prefix = 256 + '+';
@@ -431,7 +431,7 @@ int lj_strfmt_putarg(lua_State *L, SBuf *sb, int arg, int retry)
 	MSize len;
 	const char *s;
 	cTValue *mo;
-	if (LJ_UNLIKELY(!tvisstr(o)) && retry >= 0 &&
+	if (LJ_UNLIKELY(!tvisstr(o) && !tvisbuf(o)) && retry >= 0 &&
 	    !tvisnil(mo = lj_meta_lookup(L, o, MM_tostring))) {
 	  /* Call __tostring metamethod once. */
 	  copyTV(L, L->top++, mo);
@@ -447,10 +447,13 @@ int lj_strfmt_putarg(lua_State *L, SBuf *sb, int arg, int retry)
 	if (LJ_LIKELY(tvisstr(o))) {
 	  len = strV(o)->len;
 	  s = strVdata(o);
+#if LJ_HASBUFFER
 	} else if (tvisbuf(o)) {
 	  SBufExt *sbx = bufV(o);
+	  if (sbx == (SBufExt *)sb) lj_err_arg(L, arg+1, LJ_ERR_BUFFER_SELF);
 	  len = sbufxlen(sbx);
 	  s = sbx->r;
+#endif
 	} else {
 	  GCstr *str = lj_strfmt_obj(L, o);
 	  len = str->len;
