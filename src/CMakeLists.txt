@@ -499,10 +499,10 @@ endif()
 add_library(libluajit ${luajit_sources})
 set_target_properties(libluajit PROPERTIES OUTPUT_NAME luajit)
 add_dependencies(libluajit
-  buildvm_arch_h
-  buildvm
   lj_gen_headers
-  lj_gen_folddef)
+  lj_gen_folddef
+  buildvm_arch_h
+  buildvm)
 target_include_directories(libluajit PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR})
